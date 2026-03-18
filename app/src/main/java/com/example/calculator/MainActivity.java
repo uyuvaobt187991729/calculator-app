@@ -308,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showHistory() {
-        BottomSheetDialog dialog = new BottomSheetDialog(this, R.style.BottomSheetStyle);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
         View view = LayoutInflater.from(this).inflate(R.layout.layout_history, null);
         dialog.setContentView(view);
 
