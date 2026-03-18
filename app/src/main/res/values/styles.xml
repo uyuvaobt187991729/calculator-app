@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="CalcBtn" parent="Widget.MaterialComponents.Button">
+        <item name="android:layout_margin">4dp</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="backgroundTint">#3A3A3A</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_width">0dp</item>
+    </style>
+
+    <style name="CalcBtn.Orange">
+        <item name="backgroundTint">#FF9500</item>
+    </style>
+
+    <style name="CalcBtn.Green">
+        <item name="backgroundTint">#34C759</item>
+    </style>
+
+</resources>
