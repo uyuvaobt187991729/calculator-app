@@ -1,20 +1,21 @@
 package com.example.calculator;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
         setupSpecialButtons();
         setupScientificButtons();
 
-        // Long press to copy result
         tvResult.setOnLongClickListener(v -> {
             String result = tvResult.getText().toString();
             if (!result.isEmpty() && !result.equals("0")) {
@@ -183,12 +183,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void calculate() {
-        // Repeat last operation when = is pressed again
         if (justCalculated && !lastOperator.isEmpty()) {
             double current = parseDouble(tvResult.getText().toString());
             double result;
             if (hasPercent) {
-                // Keep adding same % of current value each time
                 double addition = current * lastPercentRatio;
                 result = current + addition;
                 String expr = formatNumber(current) + " + " + (lastPercentRatio * 100) + "% =";
@@ -216,7 +214,6 @@ public class MainActivity extends AppCompatActivity {
         lastOperator = operator;
 
         double result = applyOp(firstNumber, operator, secondNumber);
-
         String expr = formatNumber(firstNumber) + " " + operator + " " + currentInput + " =";
         String resultStr = formatNumber(result);
         tvExpression.setText(expr);
@@ -308,33 +305,39 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showHistory() {
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
-        View view = LayoutInflater.from(this).inflate(R.layout.layout_history, null);
-        dialog.setContentView(view);
-
-        RecyclerView rv = view.findViewById(R.id.rvHistory);
-        rv.setLayoutManager(new LinearLayoutManager(this));
-
-        if (history.isEmpty()) {
-            view.findViewById(R.id.tvNoHistory).setVisibility(View.VISIBLE);
-            rv.setVisibility(View.GONE);
-        } else {
-            view.findViewById(R.id.tvNoHistory).setVisibility(View.GONE);
-            rv.setAdapter(new HistoryAdapter(history, item -> {
-                String[] parts = item.split(" ");
-                currentInput = parts[parts.length - 1];
-                tvResult.setText(currentInput);
-                justCalculated = true;
+        try {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.HistoryDialogStyle);
+            View view = LayoutInflater.from(this).inflate(R.layout.layout_history, null);
+            builder.setView(view);
+            AlertDialog dialog = builder.create();
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            }
+            RecyclerView rv = view.findViewById(R.id.rvHistory);
+            rv.setLayoutManager(new LinearLayoutManager(this));
+            TextView tvNoHistory = view.findViewById(R.id.tvNoHistory);
+            if (history.isEmpty()) {
+                tvNoHistory.setVisibility(View.VISIBLE);
+                rv.setVisibility(View.GONE);
+            } else {
+                tvNoHistory.setVisibility(View.GONE);
+                rv.setVisibility(View.VISIBLE);
+                rv.setAdapter(new HistoryAdapter(history, item -> {
+                    String[] parts = item.split(" ");
+                    currentInput = parts[parts.length - 1];
+                    tvResult.setText(currentInput);
+                    justCalculated = true;
+                    dialog.dismiss();
+                }));
+            }
+            view.findViewById(R.id.btnClearHistory).setOnClickListener(v -> {
+                history.clear();
                 dialog.dismiss();
-            }));
+            });
+            dialog.show();
+        } catch (Exception e) {
+            Toast.makeText(this, "No history yet", Toast.LENGTH_SHORT).show();
         }
-
-        view.findViewById(R.id.btnClearHistory).setOnClickListener(v -> {
-            history.clear();
-            dialog.dismiss();
-        });
-
-        dialog.show();
     }
 
     private void updateDisplay() {
@@ -357,23 +360,22 @@ public class MainActivity extends AppCompatActivity {
         interface OnItemClick { void onClick(String item); }
         List<String> items;
         OnItemClick listener;
-        HistoryAdapter(List<String> items, OnItemClick l) { this.items = items; this.listener = l; }
-
+        HistoryAdapter(List<String> items, OnItemClick l) {
+            this.items = items;
+            this.listener = l;
+        }
         @Override
         public VH onCreateViewHolder(ViewGroup parent, int viewType) {
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_history, parent, false);
             return new VH(v);
         }
-
         @Override
         public void onBindViewHolder(VH h, int pos) {
             h.tv.setText(items.get(pos));
             h.itemView.setOnClickListener(v -> listener.onClick(items.get(pos)));
         }
-
         @Override public int getItemCount() { return items.size(); }
-
         static class VH extends RecyclerView.ViewHolder {
             TextView tv;
             VH(View v) { super(v); tv = v.findViewById(R.id.tvHistoryItem); }
